@@ -1,0 +1,102 @@
+---
+title: "Rをつかってみよう"
+author: "伊東宏樹"
+format: revealjs
+editor: visual
+---
+
+## 本日の内容
+
+-   Rとは?
+
+    -   統計解析とグラフ作成の言語と環境
+
+    -   オープンソース
+
+    -   無料
+
+    -   豊富なパッケージ
+
+-   インストール
+
+    -   CRANからインストーラーをダウンロード
+
+    -   ミラー
+
+        -   日本 <https://ftp.yz.yamagata-u.ac.jp/pub/cran/>
+
+        -   クラウド <https://cloud.r-project.org/>
+
+-   RStudio
+
+    -   Posit社が開発している統合開発環境（IDE）
+
+    -   <https://posit.co/download/rstudio-desktop/>
+
+    -   設定
+
+        -   ペーン
+
+    -   基本的な使用法
+
+    -   プロジェクト
+
+-   GUI環境
+
+    -   どうしてもコマンドラインになじめない人には
+
+    -   R Commander ([Rcmdr](https://cran.r-project.org/package=Rcmdr)パッケージ)
+
+    -   [jamovi](https://www.jamovi.org)
+
+    -   [JASP](https://jasp-stats.org)
+
+    -   [Bluesky Statistics](https://www.blueskystatistics.com)
+
+    -   手作業ではエラーしがち
+
+    -   Rスクリプトを保存できる
+
+-   パッケージ
+
+    -   統計解析用の関数やデータをまとめたもの
+
+    -   CRANなどからインストールできる
+
+    -   マニアックな解析方法もたいていある
+
+    -   ユーザーが自分で作って公開できる
+
+<!-- -->
+
+-   Tidyverse
+
+    -   tidyverseパッケージ
+
+-   基本的な使い方
+
+    -   ヘルプ
+
+-   計算
+
+    -   演算子
+
+-   データの読み込み
+
+    -   CSVファイル
+
+    -   Excelファイル
+
+-   基本的な統計関数
+
+-   グラフの作成
+
+    -   ggplot2
+
+-   さらに知るには
+
+    -   地域コミュニティ
+
+        -   Kanazawa.R, Tokyo.R, ...
+
+    -   r-wakalang
