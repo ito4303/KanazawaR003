@@ -26,6 +26,10 @@ sqrt(4) # sqrt()は平方根を返す関数
 ?sqrt # sqrt()のヘルプを表示
 help(sqrt) # これでも同じ
 
+# 演算子も実は関数
+
+`+`(1, 2)
+
 # ベクトル
 
 c(1, 2, 3) # c()はベクトルを作る関数
@@ -54,7 +58,15 @@ print(X) # 明示的に表示
 # 行列
 
 matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2) # 行列を作る関数
-y
+
+# byrow = TRUE という引数をつけると行優先になる
+
+matrix(c(1, 2, 3, 4), 2, 2, byrow = TRUE) # 行優先
+
+# ヘルプを確認
+
+?matrix # matrix()のヘルプを表示
+
 # 行列演算
 
 A <- matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2) # 行列をAというオブジェクトに代入
@@ -97,10 +109,15 @@ member
 
 member$name # name列を取り出す
 
+member[, 1] # これでも同じ（Rの添え字は1から始まります）
+
+member[, "name"] # これでも同じ
+
 member[2, ] # 2行目を取り出す
 
 member[2, "name"] # 2行目のname列を取り出す
 member[2, 1]      # これでも同じ
+member$name[2]    # これでも同じ
 
 # パッケージの利用
 
