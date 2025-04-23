@@ -1,5 +1,5 @@
 ---
-title: "金沢市への観光来訪者数の状態空間モデルによる解析"
+title: "観光来訪者数の時系列分析"
 date: 2025-05-10
 lang: ja
 format:
@@ -12,26 +12,73 @@ slide-number: true
 
 ## はじめに
 
-金沢市中心部を歩いていると、多くの観光客を目にします。観光客の数の変化を時系列分析して、どのような傾向があるのかを検討しました。
+-   観光客の人数の時系列変化は基本データ
 
-## 使用パッケージ
+## 時系列分析
 
-まずは使用するパッケージを読み込みます。データ処理には[tidyverse](https://cran.r-project.org/package=tidyverse)を使います。
+-   時系列データは、通常のデータと同様に扱えない場合がおおい
 
-時系列分析のために今回は[KFAS](https://cran.r-project.org/package=KFAS)パッケージを利用して、状態空間モデルのあてはめをおこないます。
+    -   自己相関がある = 独立ではない
+
+## 状態空間モデル
+
+-   システムと観測値を想定する
+
+    -   システム: 直接観測することのできない状態
+
+    -   観測値: 観測して得られるデータ
+
+## グラフィカルモデル
 
 ```{r}
 #| label: setup
+#| output: false
 
 library(tidyverse)
 library(KFAS)
+library(DiagrammeR)
 ```
+
+```{r}
+#| label: ssm_graph
+
+ssm_graph <- create_graph() |>
+  add_n_nodes(3, label = c("x[t-1]", "x[t]", "x[t+1]"),
+              node_aes = node_aes(fontcolor = "black")) |>
+  add_n_nodes(3, label = c("y[t-1]", "y[t]", "y[t+1]"),
+              node_aes = node_aes(fontcolor = "black")) |>
+  add_n_nodes(2, node_aes = node_aes(style = "invisible")) |>
+  add_edge(from = 1, to = 2) |>
+  add_edge(from = 2, to = 3) |>
+  add_edge(from = 1, to = 4) |>
+  add_edge(from = 2, to = 5) |>
+  add_edge(from = 3, to = 6) |>
+  add_edge(from = 7, to = 1) |>
+  add_edge(from = 3, to = 8) |>
+  set_node_position(1, 2, 2) |>
+  set_node_position(2, 3, 2) |>
+  set_node_position(3, 4, 2) |>
+  set_node_position(4, 2, 1) |>
+  set_node_position(5, 3, 1) |>
+  set_node_position(6, 4, 1) |>
+  set_node_position(7, 1, 2) |>
+  set_node_position(8, 5, 2)
+
+export_graph(ssm_graph, "output/ssm.png", "png",
+             width = 1200, height = 600)
+```
+
+![](output/ssm.png)
+
+x\[t\]: 時間tにおける状態, y: 時間tにおける観測値
 
 ## データ
 
 観光客のデータとして、公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年を使用しました。
 
 このデータは、スマートフォンの位置情報データを利用して収集されたもので、「観光来訪者数」は「推定発地から半径20km以上離れた調査地点に滞在した者。但し、調査地点勤務者を除く。」と定義されています（[デジタル観光統計オープンデータの概要](https://www.nihon-kankou.or.jp/home/userfiles/files/d-toukei/gaiyou240924.pdf)）。調査地点とは、調査対象として設定された観光地点です。
+
+## データ読み込み
 
 ダウンロードしたCSVファイル（`city2021.csv`, `city2022.csv`, `city2023.csv`, `city2024.csv`）は、`data`フォルダに入れておきます。これらのファイルを読み込み、読み込んだデータを1つのデータフレームにまとめておきます。
 
@@ -51,7 +98,7 @@ data <- dplyr::bind_rows(data_list)
 
 **データの出典**: デジタル観光統計オープンデータ（<https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/>）（2025年3月11日ダウンロード）
 
-### データの抽出と加工
+## データの抽出と加工
 
 金沢市のデータを抽出します。
 
@@ -69,6 +116,8 @@ k_data <- data |>
 
 head(k_data)
 ```
+
+## データの加工
 
 あとの可視化と解析のためデータを加工します。
 
@@ -90,7 +139,7 @@ k_data <- k_data |>
                 .keep = "none")
 ```
 
-### 可視化
+## 可視化
 
 グラフで表示します。
 
@@ -111,13 +160,11 @@ plot(p)
 
 新型コロナウイルス感染症対策のまん延防止等重点措置が終了したのが2022年3月21日ですが、だいたいそれ以降、観光来訪者数が増加しているように見えます。
 
-## 状態空間モデル
+## モデル
 
-### モデル
+モデル定義
 
-KFASパッケージを使用して状態空間モデルを作成し、データにあてはめます。状態空間モデルは、実際には観測できないシステムの状態と、状態から観測値が得られる過程とをそれぞれ明示的にモデル化したものです。
-
-状態モデルは以下の成分から構成されています。
+## 状態モデル
 
 -   回帰: 能登半島地震の影響を検討するため、地震発生の2024年1月以降を示すダミー変数`quake`を説明変数としてモデルに含めます。地震の影響は2024年1〜12月の間ずっとあると仮定しています。ただし影響の大きさは可変としています。
 
@@ -127,7 +174,11 @@ KFASパッケージを使用して状態空間モデルを作成し、データ�
 
 新型コロナウイルスの影響ですが、だんだん影響が薄れると想定し、トレンド成分に入ることを考えて、とくに回帰とはしませんでした。
 
+## 観測モデル
+
 また、目的変数`Num`はもともとは計数値ですが、数が大きく、1万人単位としていますので、観測モデルの誤差は正規分布するものとして扱います。
+
+## KFASパッケージ
 
 作成したモデルを`model`オブジェクトに入れ、`fitSSM`関数であてはめます。引数の`Q`と`H`はそれぞれ状態モデルと観測モデルの分散で、これを推定します。
 
@@ -151,6 +202,8 @@ fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
 logLik(fit$model)
 ```
 
+## 平滑化
+
 カルマンフィルタにより平滑化し、その値を取得します。
 
 ```{r}
@@ -160,7 +213,7 @@ smooth <- KFS(fit$model) |>
   coef(filtered = FALSE)
 ```
 
-### 地震の影響
+## 地震の影響
 
 地震影響の係数の推定値をみてみます。
 
@@ -172,7 +225,7 @@ smooth[, "quake"][37:48]
 
 1か月の来訪者数がおよそ`r round(-smooth[, "quake"][48], 37)`万人減少したと推定されました。
 
-### 各成分
+## 水準成分
 
 平滑化した水準成分を図示します。地震の影響と季節成分を除いた数に対応します。
 
@@ -192,7 +245,7 @@ ggplot(data = data.frame(Months = 1:max_months,
 
 2021年の秋以降急増して、最近は頭打ち傾向のように見えます。
 
-つづいて、傾き成分です。
+## 傾き成分
 
 ```{r}
 #| label: plot_slope
@@ -210,7 +263,7 @@ ggplot(data = data.frame(Months = 1:max_months,
 
 2022年以降、傾き（増加率）が減少しているようです。2024年10月以降は0.4くらいで横ばいになっていますが、これが実際にそうなのかはもっと後のデータも含めて検討する必要があるでしょう。
 
-最後に季節成分です。
+## 季節成分
 
 ```{r}
 #| label: plot_seasonal

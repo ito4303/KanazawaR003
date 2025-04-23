@@ -7,19 +7,43 @@ editor: visual
 
 ## 本日の内容
 
+::: nonincremental
 -   Rとは?
 
-    -   統計解析とグラフ作成の言語と環境
+-   RStudio
 
-    -   オープンソース
+-   パッケージの利用
 
-    -   無料
+-   基本的な使い方
 
-    -   豊富なパッケージ
+-   Tidyなデータとデータ処理
 
--   インストール
+-   グラフ作成
+:::
 
-    -   CRANからインストーラーをダウンロード
+## 自己紹介
+
+-   氏名: 伊東宏樹
+
+-   個人事業主（[伊東生態統計研究室](https://ito4303.sakura.ne.jp/)）
+
+    -   データ解析、執筆・翻訳、研修講師などお引き受けいたします。
+
+-   出版物: 『[BUGSで学ぶ階層モデリング入門](https://www.kyoritsu-pub.co.jp/book/b10003729.html)』『[生態学のための階層モデリング](https://www.kyoritsu-pub.co.jp/book/b10003301.html)』（以上共訳）など
+
+## Rとは?
+
+-   [統計計算とグラフィックスのためのシステム](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-is-R_003f)（言語と環境）
+
+-   オープンソース
+
+-   無料でつかえる
+
+-   豊富なパッケージ（後述）で機能を追加できる
+
+## インストール
+
+-   CRANからインストーラーをダウンロード
 
     -   ミラー
 
@@ -27,59 +51,53 @@ editor: visual
 
         -   クラウド <https://cloud.r-project.org/>
 
--   RStudio
+-   各種パッケージシステム（homebrew, winget, ...）からもインストールできる
 
-    -   Posit社が開発している統合開発環境（IDE）
+## RStudio
 
-    -   <https://posit.co/download/rstudio-desktop/>
+-   Posit社が開発している統合開発環境（IDE）
 
-    -   設定
+-   <https://posit.co/download/rstudio-desktop/>
 
-        -   ペーン
+-   設定
 
-    -   基本的な使用法
+    -   ペーン
 
-    -   プロジェクト
+-   基本的な使用法
 
--   GUI環境
+-   プロジェクト
 
-    -   どうしてもコマンドラインになじめない人には
+## GUI環境
 
-    -   R Commander ([Rcmdr](https://cran.r-project.org/package=Rcmdr)パッケージ)
+Rをエンジンとして使用するGUI環境もあり
 
-    -   [jamovi](https://www.jamovi.org)
+-   R Commander ([Rcmdr](https://cran.r-project.org/package=Rcmdr)パッケージ)
+-   [jamovi](https://www.jamovi.org)
+-   [JASP](https://jasp-stats.org)
+-   [Bluesky Statistics](https://www.blueskystatistics.com)
 
-    -   [JASP](https://jasp-stats.org)
+手作業ではエラーしがち → Rスクリプトを保存しておくとよい
 
-    -   [Bluesky Statistics](https://www.blueskystatistics.com)
+## パッケージの利用
 
-    -   手作業ではエラーしがち
+-   特定の目的のための関数やデータなどをまとめたもの
 
-    -   Rスクリプトを保存できる
+-   CRANなどからインストールできる
 
--   パッケージ
+-   マニアックな解析方法もたいていある
 
-    -   統計解析用の関数やデータをまとめたもの
+-   ユーザーが自分で作って公開できる
 
-    -   CRANなどからインストールできる
+## 基本的な使い方
 
-    -   マニアックな解析方法もたいていある
-
-    -   ユーザーが自分で作って公開できる
+-   ヘルプ
 
 <!-- -->
-
--   Tidyverse
-
-    -   tidyverseパッケージ
-
--   基本的な使い方
-
-    -   ヘルプ
 
 -   計算
 
     -   演算子
+    -   基本的な統計関数
 
 -   データの読み込み
 
@@ -87,16 +105,23 @@ editor: visual
 
     -   Excelファイル
 
--   基本的な統計関数
+## Tidyなデータとデータ処理
 
--   グラフの作成
+-   Tidy data（整然データ）
 
-    -   ggplot2
+-   Tidyverse
 
--   さらに知るには
+    -   tidyverseパッケージ
 
-    -   地域コミュニティ
+## グラフの作成
 
-        -   Kanazawa.R, Tokyo.R, ...
+-   デフォルトのグラフィック環境(base graphics)を使用する方法
+-   ggplot2パッケージを使用する方法
 
-    -   r-wakalang
+## さらに知るには
+
+-   地域コミュニティ
+
+    -   Kanazawa.R, Tokyo.R, ...
+
+-   r-wakalang
