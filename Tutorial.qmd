@@ -101,13 +101,7 @@ null device
 
 -   <https://posit.co/download/rstudio-desktop/>
 
--   設定
-
-    -   ペーンの配置
-
--   基本的な使用法
-
--   プロジェクト
+-   プロジェクトでファイル群を管理
 
 ## GUI環境
 
@@ -159,13 +153,22 @@ null device
 （[整然データとはなにか](https://id.fnshr.info/2017/01/09/tidy-data-intro/)）
 :::
 
-## Tidyverse
+## tidyverse
 
--   tidyverseパッケージ
+-   tidyなデータ処理のためのパッケージ群
+-   tidyverseパッケージ（メタパッケージ）
+    -   tidyr
+    -   dplyr
+    -   ggplot2
+    -   などなど
 
 ## データサイエンスのモデル
 
 ![](https://r4ds.hadley.nz/diagrams/data-science/base.png)
+
+::: {style="text-align: right;"}
+([R for Data Science](https://r4ds.hadley.nz/intro.html))
+:::
 
 ## グラフの作成
 
@@ -179,7 +182,7 @@ null device
 
 -   地域コミュニティ
 
-    -   Kanazawa.R, Tokyo.R, ...
+    -   [Kanazawa.R](https://kanazawar.connpass.com), [Tokyo.R](https://tokyor.connpass.com), [SappoRo.R](https://www.urano-ken.com/sapporor/), [fukuoka.R](https://fukuoka-r.connpass.com), [IRUMA.R](https://irumar.connpass.com), ...
 
 -   [r-wakalang](https://r-wakalang.slack.com/) (Slack)
 
