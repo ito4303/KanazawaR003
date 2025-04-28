@@ -3,7 +3,7 @@
 ## 2025年5月10日
 ##
 
-# 四則演算
+# 電卓としてつかう
 
 1 + 2
 
@@ -19,12 +19,15 @@
 
 2 ** 3
 
-# 平方根
+# 関数
 
 sqrt(4) # sqrt()は平方根を返す関数
 
 ?sqrt # sqrt()のヘルプを表示
 help(sqrt) # これでも同じ
+
+log(100) # log()は自然対数を返す関数
+log10(100) # log10()は常用対数を返す関数
 
 # 演算子も実は関数
 
@@ -34,38 +37,60 @@ help(sqrt) # これでも同じ
 
 c(1, 2, 3) # c()はベクトルを作る関数
 
-1:10 # 連続する整数のベクトル
+1:10 # コロン(:)で連続する整数のベクトルをつくれる
 
 # 代入
 
 X <- c("AB", "CD", "EF") # 文字列のベクトル
                          # Xというオブジェクトに代入
-# "="でもよい
 
-X = c("AB", "CD", "EF")
-
-# 表示
+# オブジェクトの内容を表示
 
 X
 print(X) # 明示的に表示
 
-# 因子型
-# カテゴリカルデータを扱うためのデータ型
+# 代入は"="でもよい
 
-(Y <- factor(c("AB", "CD", "EF"))) # 因子型を作る関数
-# カッコで囲むと結果を表示できる
+X = c("GH", "IJ", "KL")
+X
+
+# 逆向きの代入
+
+c("abc", "def", "ghi") -> X
+X
+
+# 因子型
+# カテゴリカルデータ（名義尺度変数）を扱うためのデータ型
+
+Y <- factor(c("リンゴ", "ミカン", "ブドウ", "リンゴ")) # 因子型を作る関数
+Y
+
+# 順序つきの因子型
+
+answer <- ordered(c("普通", "良い", "悪い", "普通", "良い", "普通"),
+                  levels = c("悪い", "普通", "良い"))
+answer
+
+# 集計して表にする
+
+table(answer)
 
 # 行列
 
-matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2) # 行列を作る関数
+matrix(1:6, nrow = 2, ncol = 3) # 行列を作る関数
 
 # byrow = TRUE という引数をつけると行優先になる
 
-matrix(c(1, 2, 3, 4), 2, 2, byrow = TRUE) # 行優先
+matrix(1:6, 2, 3, byrow = TRUE) # 行優先
+                                # 順番どおりなら引数の名前は省略できる
 
 # ヘルプを確認
 
 ?matrix # matrix()のヘルプを表示
+
+# TRUE/FALSEは論理型(logical)
+
+class(TRUE)
 
 # 行列演算
 
@@ -89,8 +114,9 @@ A * B # "*"だと要素ごとの掛け算になる
 
 list(a = 1, b = 2, b = 3) # リストを作る関数
 
-L <- list(a = c(1, 2), b = "abc", c = matrix(1:4, nrow = 2)) # リストにはなんでも入れられる
+# リストにはなんでも入れられる
 
+L <- list(a = c(1, 2), b = "abc", c = matrix(1:4, nrow = 2))
 L
 
 L[["a"]] # リストの要素を取り出す
@@ -98,6 +124,10 @@ L[["b"]]
 L[["c"]]
 
 L$a # 簡単な書き方
+
+# リストを解消する
+
+unlist(L)
 
 # データフレーム型
 # リスト型で、要素の数がそろっていて、行列のようにあつかえる
@@ -108,9 +138,7 @@ member <- data.frame(name = c("鈴木", "佐藤", "田中"),
 member
 
 member$name # name列を取り出す
-
 member[, 1] # これでも同じ（Rの添え字は1から始まります）
-
 member[, "name"] # これでも同じ
 
 member[2, ] # 2行目を取り出す
@@ -119,11 +147,14 @@ member[2, "name"] # 2行目のname列を取り出す
 member[2, 1]      # これでも同じ
 member$name[2]    # これでも同じ
 
+
 # パッケージの利用
 
-install.packages("setariaviridis") # パッケージをインストールする関数
+install.packages("setariaviridis") # install.packagesはパッケージを
+                                   # インストールする関数
 # setariaviridis は、エノコログサ(Setaria viridis)の測定データを収めたパッケージ
-library(setariaviridis) # パッケージを読み込む
+
+library(setariaviridis) # library関数でパッケージを読み込む
 ?setariaviridis # パッケージのヘルプを表示
 
 View(setaria_viridis)    # データを表計算ソフトのように表示
@@ -135,6 +166,21 @@ summary(setaria_viridis) # データの要約を表示
 mean(setaria_viridis$culm_length)  # 平均
 var(setaria_viridis$culm_length)   # 不偏分散
 sd(setaria_viridis$culm_length)    # 標準偏差
+
+# dplyrパッケージを使ったデータの抽出とパイプ演算子
+
+setaria_viridis |>
+  dplyr::select(culm_length) |>  # culm_length列を抽出
+  mean()                         # 平均
+
+# パッケージ名::関数名 で、パッケージを読み込まなくても関数を使用できる
+# ほかのパッケージと関数名がかぶるときに、どのパッケージの関数か明示的に指定できる
+
+# パイプ演算子は結果を次の関数の第1引数として渡す
+# magrittrパッケージの %>% も同じ
+
+
+
 
 # ggplot2パッケージを使ったグラフの描画
 

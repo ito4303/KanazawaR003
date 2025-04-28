@@ -14,11 +14,71 @@ slide-number: true
 
 -   観光客の人数の時系列変化は基本データ
 
+```{r}
+#| label: setup
+#| output: false
+
+library(tidyverse)
+library(systemfonts)
+library(KFAS)
+library(DiagrammeR)
+
+set.seed(123)
+font_jp <- "YuGothic"
+font_size <- 18
+```
+
 ## 時系列分析
 
--   時系列データは、通常のデータと同様に扱えない場合がおおい
+-   時系列データは
+    -   通常のデータと同様に扱えない場合がおおい
+    -   自己相関がある → 独立ではない
 
-    -   自己相関がある = 独立ではない
+## 何も考えずに時間を説明変数に回帰すると
+
+```{r}
+#| label: ts_example
+
+# シミュレーション用の関数定義
+sim_func <- function(length = 10) {
+  # 結果を格納するベクトル
+  y <- rep(0, length)
+  # 誤差
+  noise <- rnorm(length, 0, 0.5)
+  for (t in 2:length) {
+    # ランダムウオーク
+    y[t] <- y[t - 1] + noise[t]
+  }
+  return(y)
+}
+
+# 繰り返し回数
+R <- 100
+
+# 時系列の長さ
+Time <- 1:30
+
+# シミュレーションを実行して結果をYに保存する
+Y <- replicate(R , sim_func(max(Time)))
+
+# 時間を説明変数とした線形回帰のp値を計算する
+p_value <- sapply(1:R , function(i) {
+  s <- summary(lm(Y[, i] ~ Time))
+  s[["coefficients"]]["Time", "Pr(>|t|)"]
+  })
+
+df <- data.frame(Time = rep(Time, R),
+           Group = factor(rep(1:R, each = max(Time))),
+           Y = c(Y),
+           sig = rep((p_value < 0.05), each = max(Time)))
+ggplot(df, aes(x = Time, y = Y, group = Group, color = sig)) +
+  geom_line(linewidth = 0.8, alpha = 0.8) +
+  scale_color_discrete(name = "回帰の結果",
+                       labels = c("有意でない", "有意")) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
+
+ランダムウオークでもだいたい有意（p\<0.05）になる
 
 ## 状態空間モデル
 
@@ -29,15 +89,6 @@ slide-number: true
     -   観測値: 観測して得られるデータ
 
 ## グラフィカルモデル
-
-```{r}
-#| label: setup
-#| output: false
-
-library(tidyverse)
-library(KFAS)
-library(DiagrammeR)
-```
 
 ```{r}
 #| label: ssm_graph
@@ -74,9 +125,10 @@ x\[t\]: 時間tにおける状態, y: 時間tにおける観測値
 
 ## データ
 
-観光客のデータとして、公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年を使用しました。
-
-このデータは、スマートフォンの位置情報データを利用して収集されたもので、「観光来訪者数」は「推定発地から半径20km以上離れた調査地点に滞在した者。但し、調査地点勤務者を除く。」と定義されています（[デジタル観光統計オープンデータの概要](https://www.nihon-kankou.or.jp/home/userfiles/files/d-toukei/gaiyou240924.pdf)）。調査地点とは、調査対象として設定された観光地点です。
+-   公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年を使用
+-   スマートフォンの位置情報データを利用して収集
+-   観光来訪者数: 「推定発地から半径20km以上離れた調査地点に滞在した者。但し、調査地点勤務者を除く。」（[デジタル観光統計オープンデータの概要](https://www.nihon-kankou.or.jp/home/userfiles/files/d-toukei/gaiyou240924.pdf)）
+    -   調査地点とは、調査対象として設定された観光地点
 
 ## データ読み込み
 
@@ -84,6 +136,7 @@ x\[t\]: 時間tにおける状態, y: 時間tにおける観測値
 
 ```{r}
 #| label: read_data
+#| echo: true
 
 data_dir <- "data"
 data_files <- c("city2021.csv", "city2022.csv",
@@ -104,8 +157,9 @@ data <- dplyr::bind_rows(data_list)
 
 ```{r}
 #| label: extract_kanazawa
+#| echo: true
 
-k_data <- data |>
+data_Kanazawa <- data |>
   dplyr::filter(`地域名称` == "金沢市")
 ```
 
@@ -114,7 +168,7 @@ k_data <- data |>
 ```{r}
 #| label: head_kanazaw_data
 
-head(k_data)
+head(data_Kanazawa)
 ```
 
 ## データの加工
@@ -131,8 +185,9 @@ head(k_data)
 
 ```{r}
 #| label: mutate
+#| echo: true
 
-k_data <- k_data |>
+data_Kanazawa <- data_Kanazawa |>
   dplyr::mutate(YM = str_c(`年`, `月`, sep = "/"),
                 Months = (`年` - 2021) * 12 + `月`,
                 Num = `人数` / 10000,
@@ -146,25 +201,33 @@ k_data <- k_data |>
 ```{r}
 #| label: plot_ts
 
-max_months <- max(k_data$Months)
-p <- ggplot(k_data) +
+max_months <- max(data_Kanazawa$Months)
+p <- ggplot(data_Kanazawa) +
   geom_line(aes(x = Months, y = Num), linewidth = 1) +
   scale_x_continuous(name = "年/月",
                      breaks = seq(1, max_months - 5, 6),
                      minor_breaks = seq(1, max_months, 3),
-                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
   scale_y_continuous(name = "人数（万人）") +
-  theme_gray(base_family = "YuGothic")
+  theme_grey(base_family = font_jp, base_size = font_size)
 plot(p)
 ```
 
+```{=html}
+<!--
 新型コロナウイルス感染症対策のまん延防止等重点措置が終了したのが2022年3月21日ですが、だいたいそれ以降、観光来訪者数が増加しているように見えます。
+-->
+```
 
 ## モデル
 
 モデル定義
 
-## 状態モデル
+-   観測モデル
+
+-   システムモデル
+
+## システムモデル
 
 -   回帰: 能登半島地震の影響を検討するため、地震発生の2024年1月以降を示すダミー変数`quake`を説明変数としてモデルに含めます。地震の影響は2024年1〜12月の間ずっとあると仮定しています。ただし影響の大きさは可変としています。
 
@@ -183,14 +246,14 @@ plot(p)
 作成したモデルを`model`オブジェクトに入れ、`fitSSM`関数であてはめます。引数の`Q`と`H`はそれぞれ状態モデルと観測モデルの分散で、これを推定します。
 
 ```{r}
-#| label: model
+#| label: model1
 
 quake <- c(rep(0, 36), rep(1, 12))
 model <- SSModel(Num ~ SSMregression(~ quake, Q = NA) +
                    SSMtrend(degree = 2,
                             Q = list(matrix(NA), matrix(NA))) +
                    SSMseasonal(period = 12, Q = NA, sea.type = "dummy"),
-                 H = NA, data = k_data)
+                 H = NA, data = data_Kanazawa)
 fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
 ```
 
@@ -239,11 +302,15 @@ ggplot(data = data.frame(Months = 1:max_months,
   scale_x_continuous(name = "年/月",
                      breaks = seq(1, max_months - 5, 6),
                      minor_breaks = seq(1, max_months, 3),
-                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
-  theme_gray(base_family = "YuGothic")
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
 ```
 
+```{=html}
+<!--
 2021年の秋以降急増して、最近は頭打ち傾向のように見えます。
+-->
+```
 
 ## 傾き成分
 
@@ -257,11 +324,15 @@ ggplot(data = data.frame(Months = 1:max_months,
   scale_x_continuous(name = "年/月",
                      breaks = seq(1, max_months - 5, 6),
                      minor_breaks = seq(1, max_months, 3),
-                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
-  theme_gray(base_family = "YuGothic")
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
 ```
 
+```{=html}
+<!--
 2022年以降、傾き（増加率）が減少しているようです。2024年10月以降は0.4くらいで横ばいになっていますが、これが実際にそうなのかはもっと後のデータも含めて検討する必要があるでしょう。
+-->
+```
 
 ## 季節成分
 
@@ -275,11 +346,59 @@ ggplot(data = data.frame(Months = 1:max_months,
   scale_x_continuous(name = "年/月",
                      breaks = seq(1, max_months - 5, 6),
                      minor_breaks = seq(1, max_months, 1),
-                     labels = k_data$YM[seq(1, max_months - 5, 6)]) +
-  theme_gray(base_family = "YuGothic")
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
 ```
 
+```{=html}
+<!--
 毎年11月に来訪者数が多く、つづいて5月、3月となっています。一方、1月と2月の落ち込みが激しくなっています。
+-->
+```
+
+## 予測
+
+地震の影響はなくなったものとして12か月先までを予測します。
+
+```{r}
+#| label: prediction
+
+n_ahead <- 12
+quake <- rep(0, n_ahead)
+new_data <- SSModel(rep(NA, n_ahead) ~ SSMregression(~ quake,
+                                                     Q = fit$model$Q[1, 1, ]) +
+                      SSMtrend(degree = 2,
+                               Q = list(fit$model$Q[2, 2, ],
+                                        fit$model$Q[3, 3, ])) +
+                    SSMseasonal(period = 12, Q = fit$model$Q[4, 4, ],
+                                sea.type = "dummy"),
+                    H = fit$model$H)
+pred <- predict(fit$model, newdata = new_data,
+                  interval = "predict", level = 0.95,
+                  type = "response")
+```
+
+```{r}
+#| label: plot_prediction
+#| warning: false
+#| message: false
+
+pred_df <- data.frame(pred)
+pred_df$Months <- max_months + 1:n_ahead
+YM <- c(data_Kanazawa$YM, str_c("2025", 1:n_ahead, sep = "/"))
+p +
+  geom_ribbon(data = pred_df,
+              aes(x = Months, ymin = lwr, ymax = upr),
+              fill = "skyblue", alpha = 0.5) +
+  geom_line(data = pred_df,
+            aes(x = Months, y = fit),
+            linewidth = 1, color = "blue") +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months + n_ahead - 5, 6),
+                     minor_breaks = seq(1, max_months + n_ahead, 3),
+                     labels = YM[seq(1, max_months + n_ahead - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
 
 ## まとめ
 

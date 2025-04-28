@@ -31,6 +31,48 @@ editor: visual
 
 -   出版物: 『[BUGSで学ぶ階層モデリング入門](https://www.kyoritsu-pub.co.jp/book/b10003729.html)』『[生態学のための階層モデリング](https://www.kyoritsu-pub.co.jp/book/b10003301.html)』（以上共訳）など
 
+## R歴
+
+-   Rをつかいはじめたのは2003年はじめごろらしい（Ver. 1.6.1あたり）
+
+【参考】
+
+-   2003年3月の日本生態学会の自由集会[「デ－タ解析の落とし穴，穴から脱出する計算機ワザ」](https://kuboweb.github.io/-kubo/ce/2003/index.html)
+
+    -   久保拓弥さんの発表[「計算機実験用ランダム標本集団の飼い方・しつけ方」](https://kuboweb.github.io/-kubo/ce/2003/ce2003.pdf) にRの解説あり
+
+## 残っていた記録
+
+```         
+R : Copyright 2002, The R Development Core Team
+Version 1.6.1  (2002-11-01)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type `license()' or `licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type `contributors()' for more information.
+
+Type `demo()' for some demos, `help()' for on-line help, or
+`help.start()' for a HTML browser interface to help.
+Type `q()' to quit R.
+
+> library(survival)
+> 
+> abies <- read.table("abies_l.data", header=T)
+> data <- abies[(abies$start %in% 19970101:19971231),]
+> data$a <- (1 - data$a) * (1 - data$c)
+> fit <- survfit(Surv(mo, a) ~ D + S, data=data)
+> 
+> postscript("abies_l.eps", horizontal=FALSE, height=(8/2.54), width=(8/2.54), pointsize=9)
+> plot(fit, xlab="Months", ylab="Survival Rate", main="Abies homolepis (1997)",
++      xlim=c(0,70), ylim=c(0,1), col=c(2,2,4,4), lty=c(1,2,1,2))
+> dev.off()
+null device 
+          1 
+```
+
 ## Rとは?
 
 -   [統計計算とグラフィックスのためのシステム](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-is-R_003f)（言語と環境）
@@ -61,7 +103,7 @@ editor: visual
 
 -   設定
 
-    -   ペーン
+    -   ペーンの配置
 
 -   基本的な使用法
 
@@ -69,9 +111,10 @@ editor: visual
 
 ## GUI環境
 
-Rをエンジンとして使用するGUI環境もあり
+コマンドラインの操作が苦手な方にはGUI環境もあり
 
 -   R Commander ([Rcmdr](https://cran.r-project.org/package=Rcmdr)パッケージ)
+-   [EZR](https://www.jichi.ac.jp/usr/hema/EZR/statmed.html)
 -   [jamovi](https://www.jamovi.org)
 -   [JASP](https://jasp-stats.org)
 -   [Bluesky Statistics](https://www.blueskystatistics.com)
@@ -80,7 +123,7 @@ Rをエンジンとして使用するGUI環境もあり
 
 ## パッケージの利用
 
--   特定の目的のための関数やデータなどをまとめたもの
+-   特定の解析方法などの関数やデータ類をまとめたもの
 
 -   CRANなどからインストールできる
 
@@ -90,33 +133,47 @@ Rをエンジンとして使用するGUI環境もあり
 
 ## 基本的な使い方
 
--   ヘルプ
-
-<!-- -->
+### 実演
 
 -   計算
 
-    -   演算子
-    -   基本的な統計関数
+-   ヘルプ
 
--   データの読み込み
+-   データの型
 
-    -   CSVファイル
-
-    -   Excelファイル
+-   パッケージの利用
 
 ## Tidyなデータとデータ処理
 
 -   Tidy data（整然データ）
 
--   Tidyverse
+    1.  個々の変数 (variable) が1つの列 (column) をなす。
 
-    -   tidyverseパッケージ
+    2.  個々の観測 (observation) が1つの行 (row) をなす。
+
+    3.  個々の観測の構成単位の類型 (type of observational unit) が1つの表 (table) をなす。
+
+    4.  個々の値 (value) が1つのセル (cell) をなす。
+
+::: {style="text-align: right;"}
+（[整然データとはなにか](https://id.fnshr.info/2017/01/09/tidy-data-intro/)）
+:::
+
+## Tidyverse
+
+-   tidyverseパッケージ
+
+## データサイエンスのモデル
+
+![](https://r4ds.hadley.nz/diagrams/data-science/base.png)
 
 ## グラフの作成
 
--   デフォルトのグラフィック環境(base graphics)を使用する方法
+### 実演
+
 -   ggplot2パッケージを使用する方法
+
+-   デフォルトのグラフィック環境(base graphics)を使用する方法
 
 ## さらに知るには
 
@@ -124,4 +181,8 @@ Rをエンジンとして使用するGUI環境もあり
 
     -   Kanazawa.R, Tokyo.R, ...
 
--   r-wakalang
+-   [r-wakalang](https://r-wakalang.slack.com/) (Slack)
+
+-   [mandaRa](https://scrapbox.io/mandaRa/) (scrapbox.io)
+
+-   [RjpWiki](https://www.okadajp.org/RWiki/)
