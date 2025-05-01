@@ -1,0 +1,22 @@
+---
+title: "観光来訪者数をShinyで可視化"
+author: "伊東宏樹"
+date: 2025-05-10
+lang: ja
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    code-copy: true
+embed-resources: true
+slide-number: true
+---
+
+## Shinyとは
+
+ウェブアプリをつくれるシステム
+
+全国各市区町村の観光来訪者数データをウェブアプリにしてみた
+
+## データ
+
+-   公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年

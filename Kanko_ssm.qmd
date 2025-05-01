@@ -1,5 +1,6 @@
 ---
 title: "観光来訪者数の時系列分析"
+author: "伊東宏樹"
 date: 2025-05-10
 lang: ja
 format:
@@ -249,8 +250,6 @@ plot(p)
 
 状態空間モデルをあつかうパッケージ
 
-
-
 ## モデルの定義とあてはめ
 
 引数の`Q`と`H`はそれぞれシステムモデルと観測モデルの分散で、これを推定します。
@@ -268,9 +267,6 @@ model <- SSModel(Num ~
                  H = NA, data = data_Kanazawa)
 fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
 ```
-
-
-
 
 ## 平滑化
 

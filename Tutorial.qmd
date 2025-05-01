@@ -1,8 +1,14 @@
 ---
 title: "Rをつかってみよう"
 author: "伊東宏樹"
-format: revealjs
-editor: visual
+date: 2025-05-10
+lang: ja
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    code-copy: true
+embed-resources: true
+slide-number: true
 ---
 
 ## 本日の内容
@@ -40,6 +46,7 @@ editor: visual
 -   2003年3月の日本生態学会の自由集会[「デ－タ解析の落とし穴，穴から脱出する計算機ワザ」](https://kuboweb.github.io/-kubo/ce/2003/index.html)
 
     -   久保拓弥さんの発表[「計算機実験用ランダム標本集団の飼い方・しつけ方」](https://kuboweb.github.io/-kubo/ce/2003/ce2003.pdf) にRの解説あり
+    -   実はこの集会には参加できなかったのですが（裏プログラムで発表）
 
 ## 残っていた記録
 
@@ -99,7 +106,7 @@ null device
 
 -   Posit社が開発している統合開発環境（IDE）
 
--   <https://posit.co/download/rstudio-desktop/>
+-   ダウンロード: <https://posit.co/download/rstudio-desktop/>
 
 -   プロジェクトでファイル群を管理
 
@@ -127,7 +134,9 @@ null device
 
 ## 基本的な使い方
 
-### 実演
+::: {style="margin-top: 1em;"}
+**実演**
+:::
 
 -   計算
 
@@ -170,9 +179,25 @@ null device
 ([R for Data Science](https://r4ds.hadley.nz/intro.html))
 :::
 
+## データの読み込み
+
+-   CSVファイル
+
+    -   標準の`read.csv`関数
+
+    -   readrパッケージの`read_csv`関数
+
+-   Excelファイル
+
+    -   readxlパッケージの`read_excel`関数
+
+RStudioではメニューからも実行可能
+
 ## グラフの作成
 
-### 実演
+::: {style="margin-top: 1em;"}
+**実演**
+:::
 
 -   ggplot2パッケージを使用する方法
 
