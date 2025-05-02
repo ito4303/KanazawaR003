@@ -24,6 +24,13 @@ help(sqrt) # これでも同じ
 
 log(100) # log()は自然対数を返す関数
 log10(100) # log10()は常用対数を返す関数
+log(100, base = 10) # これでも同じ
+?log # log()のヘルプを表示
+log(100, 10) # 順番どおりなら、引数名は省略できる
+log(base = 10, 100) # これでもよい
+log(b = 10, 100)    # 引数名はほかと重ならなければ、途中まででもよい
+                    # といっても、あとでわかりにくくなるので、
+                    # なるべく順番どおりにするか、省略しないほうがよい
 
 # 演算子も実は関数
 
@@ -82,7 +89,6 @@ matrix(1:6, nrow = 2, ncol = 3) # 行列を作る関数
 # byrow = TRUE という引数をつけると行優先になる
 
 matrix(1:6, 2, 3, byrow = TRUE) # 行優先
-                                # 順番どおりなら引数の名前は省略できる
 
 # ヘルプを確認
 
@@ -94,11 +100,8 @@ class(TRUE)
 
 # 行列演算
 
-A <- matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2) # 行列をAというオブジェクトに代入
-B <- matrix(c(2, 0, 0, 2), nrow = 2, ncol = 2) # 行列をBというオブジェクトに代入
-
-A
-B
+(A <- matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2)) # 行列をAというオブジェクトに代入
+(B <- matrix(c(2, 0, 0, 2), nrow = 2, ncol = 2)) # 行列をBというオブジェクトに代入
 
 A + B # 行列の足し算
 
@@ -142,6 +145,8 @@ member[, 1] # これでも同じ（Rの添え字は1から始まります）
 member[, "name"] # これでも同じ
 
 member[2, ] # 2行目を取り出す
+member[member$name == "佐藤", ] # nameが佐藤の行を取り出す
+                                # tidyverseだとよりわかりやすい書き方
 
 member[2, "name"] # 2行目のname列を取り出す
 member[2, 1]      # これでも同じ
@@ -151,6 +156,12 @@ member$name[2]    # これでも同じ
 
 
 # パッケージの利用
+
+# tidyverseパッケージを読み込む
+
+library(tidyverse)
+
+# setariaviridisパッケージをインストールする
 
 install.packages("setariaviridis") # install.packagesはパッケージを
                                    # インストールする関数
@@ -169,28 +180,45 @@ mean(setaria_viridis$culm_length)  # 平均
 var(setaria_viridis$culm_length)   # 不偏分散
 sd(setaria_viridis$culm_length)    # 標準偏差
 
+
+
 # dplyrパッケージを使ったデータの抽出とパイプ演算子
 
 setaria_viridis |>
-  dplyr::select(culm_length) |>  # culm_length列を抽出
+  dplyr::pull(culm_length) |>  # culm_length列を抽出
   mean()                         # 平均
 
-# パッケージ名::関数名 で、パッケージを読み込まなくても関数を使用できる
+# パッケージ名::関数名 と書くと、library()関数でパッケージを読み込んで
+# おかなくても関数を使用できる
 # ほかのパッケージと関数名がかぶるときに、どのパッケージの関数か明示的に指定できる
 
 # パイプ演算子は結果を次の関数の第1引数として渡す
 # magrittrパッケージの %>% も同じ
 
-setaria_viridis |>
+setaria_viridis %>%
   dplyr::filter(culm_length > 60) # culm_lengthが60以上のデータを抽出
 
+# さっきのmembersデータフレームであった例
+
+member[member$name == "佐藤", ] # nameが佐藤の行を取り出す
+
+member |>
+  dplyr::filter(name == "佐藤") # tidyverseのdplyrの書き方
+
+member |>
+  dplyr::filter(name == "佐藤" | name == "鈴木") |>
+  dplyr::select(age) # nameが佐藤の行を取り出して、age列を抽出
+
+member |>
+  dplyr::filter(name == "佐藤" | name == "鈴木") |>
+  dplyr::pull(age) # pull()はベクトルとして抽出
 
 
 
 # ggplot2パッケージを使ったグラフの描画
 
-install.packages("ggplot2") # ggplot2パッケージをインストール
-library(ggplot2) # ggplot2パッケージを読み込む
+# ggplot2パッケージはtidyverseに含まれている
+
 ?ggplot2 # ggplot2のヘルプを表示
 
 # culm_lengthを横軸に、panicle_lengthを縦軸にした散布図を描く
@@ -218,12 +246,29 @@ plot(panicle_length ~ culm_length, data = setaria_viridis,
 
 # ggplot2に戻ります
 # 根株ごとに色を変える
+# いったんオブジェクトに保存
 
-ggplot(data = setaria_viridis,
+p <- ggplot(data = setaria_viridis,
        mapping = aes(x = culm_length, y = panicle_length,
                      colour = factor(root_number))) +
   geom_point(size = 3) +  # 点のサイズを変える
   labs(title = "Setaria viridis",
        x = "Culm length (cm)", y = "Panicle length (cm)") +
-  scale_colour_discrete(name = "Root number")
+  scale_colour_discrete(name = "Root number") # 凡例のタイトルを変更
 
+# オブジェクトに保存しておいたものを表示
+
+plot(p)
+
+# これでもよい
+
+print(p)
+
+# これでも
+
+p
+
+# テーマとフォントを変更
+
+p +
+  theme_classic(base_family = "Noto Sans", base_size = 18)

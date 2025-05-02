@@ -126,6 +126,26 @@ null device
 -   [JASP](https://jasp-stats.org)
 -   [Bluesky Statistics](https://www.blueskystatistics.com)
 
+## R Commander
+
+インストール
+
+```{r}
+#| eval: false
+#| echo: true
+
+install.packages("Rcmdr", dependencies = TRUE)
+```
+
+起動
+
+```{r}
+#| eval: false
+#| echo: true
+
+library(Rcmdr)
+```
+
 手作業ではエラーしがち → Rスクリプトを保存しておくとよい
 
 ## パッケージの利用

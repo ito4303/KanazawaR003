@@ -33,6 +33,16 @@ slide-number: true
 
 ひとつのファイルにまとめることもできるが、分けておくのがおすすめとのこと。
 
-## 完成品
+## 観光来訪者数のグラフを表示するアプリをつくってみた
 
-デモ
+参考にしたもの
+
+-   [公式ドキュメント](https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/)
+
+-   Cheat Sheet
+
+-   検索
+
+-   GitHub Copilot
+
+## 完成しました {style="margin-top: 5em; text-align: center;"}
