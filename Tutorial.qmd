@@ -35,6 +35,8 @@ slide-number: true
 
     -   データ解析、執筆・翻訳、研修講師などお引き受けいたします。
 
+-   1991〜2024年まで森林総合研究所勤務（森林生態学）
+
 -   出版物: 『[BUGSで学ぶ階層モデリング入門](https://www.kyoritsu-pub.co.jp/book/b10003729.html)』『[生態学のための階層モデリング](https://www.kyoritsu-pub.co.jp/book/b10003301.html)』（以上共訳）など
 
 ## R歴
@@ -46,7 +48,7 @@ slide-number: true
 -   2003年3月の日本生態学会の自由集会[「デ－タ解析の落とし穴，穴から脱出する計算機ワザ」](https://kuboweb.github.io/-kubo/ce/2003/index.html)
 
     -   久保拓弥さんの発表[「計算機実験用ランダム標本集団の飼い方・しつけ方」](https://kuboweb.github.io/-kubo/ce/2003/ce2003.pdf) にRの解説あり
-    -   実はこの集会には参加できなかったのですが（裏プログラムで発表）
+        -   実はこの集会には参加できなかったのですが（裏プログラムで発表）
 
 ## 残っていた記録
 
@@ -100,7 +102,7 @@ null device
 
         -   クラウド <https://cloud.r-project.org/>
 
--   各種パッケージシステム（homebrew, winget, ...）からもインストールできる
+-   各OS用パッケージシステム（homebrew, winget, ...）からもインストールできる
 
 ## RStudio
 
@@ -109,6 +111,10 @@ null device
 -   ダウンロード: <https://posit.co/download/rstudio-desktop/>
 
 -   プロジェクトでファイル群を管理
+
+## RStudioの設定とか
+
+実際の画面をご覧ください
 
 ## GUI環境
 

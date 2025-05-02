@@ -250,6 +250,12 @@ plot(p)
 
 状態空間モデルをあつかうパッケージ
 
+-   モデルの定義と観測データへのあてはめ
+
+-   カルマンフィルタによるフィルタリング・平滑化・予測
+
+-   正規分布以外（ポアソン分布など）の観測データにも対応
+
 ## モデルの定義とあてはめ
 
 引数の`Q`と`H`はそれぞれシステムモデルと観測モデルの分散で、これを推定します。
@@ -282,19 +288,29 @@ smooth <- KFS(fit$model) |>
 
 ## 能登半島地震の影響
 
-地震影響の係数の推定値をみてみます。
+<!-- 地震影響の係数の推定値をみてみます。 -->
 
 ```{r}
 #| label: quake
 
-smooth[, "quake"][37:48]
+ggplot(data = data.frame(Months = (max_months - 11):max_months,
+                         quake = smooth[, "quake"][37:48])) +
+  geom_line(mapping = aes(x = Months, y = quake),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(max_months - 11, max_months, 2),
+                     minor_breaks = seq(max_months - 11, max_months, 1),
+                     labels = data_Kanazawa$YM[seq(max_months - 11, max_months, 2)]) +
+  scale_y_continuous(name = "地震影響", limits = c(-10, 0)) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+
 ```
 
-1か月の来訪者数がおよそ`r round(-smooth[, "quake"][48], 37)`万人減少したと推定されました。
+<!-- 1か月の来訪者数がおよそ`r round(-smooth[, "quake"][48], 1)`万人減少したと推定されました。 -->
 
 ## 水準成分
 
-平滑化した水準成分を図示します。地震の影響と季節成分を除いた数に対応します。
+地震の影響と季節成分を除いた数に対応
 
 ```{r}
 #| label: plot_level
@@ -317,6 +333,8 @@ ggplot(data = data.frame(Months = 1:max_months,
 ```
 
 ## 傾き成分
+
+1か月あたりの増加数
 
 ```{r}
 #| label: plot_slope
@@ -362,7 +380,7 @@ ggplot(data = data.frame(Months = 1:max_months,
 
 ## 予測
 
-地震の影響はなくなったものとして12か月先までを予測します。
+地震の影響はなくなったものとして12か月先までを予測
 
 ```{r}
 #| label: prediction
