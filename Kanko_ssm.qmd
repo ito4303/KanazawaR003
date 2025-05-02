@@ -1,0 +1,432 @@
+---
+title: "観光来訪者数の時系列分析"
+author: "伊東宏樹"
+date: 2025-05-10
+lang: ja
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    code-copy: true
+embed-resources: true
+slide-number: true
+---
+
+## はじめに
+
+-   観光客の人数の時系列変化は基本データ
+
+```{r}
+#| label: setup
+#| output: false
+
+library(tidyverse)
+library(systemfonts)
+library(KFAS)
+library(DiagrammeR)
+
+set.seed(123)
+font_jp <- "YuGothic"
+font_size <- 18
+```
+
+## 時系列分析
+
+-   時系列データは
+    -   通常のデータと同様に扱えない場合がおおい
+    -   自己相関がある → 独立ではない
+
+## 何も考えずに時間を説明変数に回帰すると
+
+```{r}
+#| label: ts_example
+
+# シミュレーション用の関数定義
+sim_func <- function(length = 10) {
+  # 結果を格納するベクトル
+  y <- rep(0, length)
+  # 誤差
+  noise <- rnorm(length, 0, 0.5)
+  for (t in 2:length) {
+    # ランダムウオーク
+    y[t] <- y[t - 1] + noise[t]
+  }
+  return(y)
+}
+
+# 繰り返し回数
+R <- 100
+
+# 時系列の長さ
+Time <- 1:30
+
+# シミュレーションを実行して結果をYに保存する
+Y <- replicate(R , sim_func(max(Time)))
+
+# 時間を説明変数とした線形回帰のp値を計算する
+p_value <- sapply(1:R , function(i) {
+  s <- summary(lm(Y[, i] ~ Time))
+  s[["coefficients"]]["Time", "Pr(>|t|)"]
+  })
+
+df <- data.frame(Time = rep(Time, R),
+           Group = factor(rep(1:R, each = max(Time))),
+           Y = c(Y),
+           sig = rep((p_value < 0.05), each = max(Time)))
+ggplot(df, aes(x = Time, y = Y, group = Group, color = sig)) +
+  geom_line(linewidth = 0.8, alpha = 0.8) +
+  scale_color_discrete(name = "回帰の結果",
+                       labels = c("有意でない", "有意")) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
+
+ランダムウオークでもだいたい有意（p\<0.05）になる
+
+## 状態空間モデル
+
+-   システムと観測値を想定する
+
+    -   システム: 直接観測することのできない状態
+
+    -   観測値: 観測して得られるデータ
+
+## グラフィカルモデル
+
+```{r}
+#| label: ssm_graph
+
+ssm_graph <- create_graph() |>
+  add_n_nodes(3, label = c("x[t-1]", "x[t]", "x[t+1]"),
+              node_aes = node_aes(fontcolor = "black")) |>
+  add_n_nodes(3, label = c("y[t-1]", "y[t]", "y[t+1]"),
+              node_aes = node_aes(fontcolor = "black")) |>
+  add_n_nodes(2, node_aes = node_aes(style = "invisible")) |>
+  add_edge(from = 1, to = 2) |>
+  add_edge(from = 2, to = 3) |>
+  add_edge(from = 1, to = 4) |>
+  add_edge(from = 2, to = 5) |>
+  add_edge(from = 3, to = 6) |>
+  add_edge(from = 7, to = 1) |>
+  add_edge(from = 3, to = 8) |>
+  set_node_position(1, 2, 2) |>
+  set_node_position(2, 3, 2) |>
+  set_node_position(3, 4, 2) |>
+  set_node_position(4, 2, 1) |>
+  set_node_position(5, 3, 1) |>
+  set_node_position(6, 4, 1) |>
+  set_node_position(7, 1, 2) |>
+  set_node_position(8, 5, 2)
+
+export_graph(ssm_graph, "output/ssm.png", "png",
+             width = 1200, height = 600)
+```
+
+![](output/ssm.png)
+
+x\[t\]: 時間tにおける状態, y: 時間tにおける観測値
+
+## データ
+
+-   公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年を使用
+-   スマートフォンの位置情報データを利用して収集
+-   観光来訪者数: 「推定発地から半径20km以上離れた調査地点に滞在した者。但し、調査地点勤務者を除く。」（[デジタル観光統計オープンデータの概要](https://www.nihon-kankou.or.jp/home/userfiles/files/d-toukei/gaiyou240924.pdf)）
+    -   調査地点とは、調査対象として設定された観光地点
+
+## データ読み込み
+
+ダウンロードしたCSVファイル（`city2021.csv`, `city2022.csv`, `city2023.csv`, `city2024.csv`）は、`data`フォルダに入れておきます。これらのファイルを読み込み、読み込んだデータを1つのデータフレームにまとめておきます。
+
+```{r}
+#| label: read_data
+#| echo: true
+
+data_dir <- "data"
+data_files <- c("city2021.csv", "city2022.csv",
+                "city2023.csv", "city2024.csv")
+
+data_list <- purrr::map(data_files,
+                        \(f) read_csv(file = file.path(data_dir, f),
+                                      locale = locale(encoding = "CP932"),
+                                      show_col_types = FALSE))
+data <- dplyr::bind_rows(data_list)
+```
+
+**データの出典**: デジタル観光統計オープンデータ（<https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/>）（2025年3月11日ダウンロード）
+
+## データの抽出と加工
+
+金沢市のデータを抽出します。
+
+```{r}
+#| label: extract_kanazawa
+#| echo: true
+
+data_Kanazawa <- data |>
+  dplyr::filter(`地域名称` == "金沢市")
+```
+
+以下のようなデータとなっています。
+
+```{r}
+#| label: head_kanazaw_data
+
+head(data_Kanazawa)
+```
+
+## データの加工
+
+あとの可視化と解析のためデータを加工します。
+
+-   `年`と`月`から、"年/月"となる文字列変数`YM`をつくります。
+
+-   2021年1月からの月数を`Months`という変数に格納します。
+
+-   人数を1万人単位にして`Num`という変数に格納します。
+
+-   必要な列（変数）だけ残します。
+
+```{r}
+#| label: mutate
+#| echo: true
+
+data_Kanazawa <- data_Kanazawa |>
+  dplyr::mutate(YM = str_c(`年`, `月`, sep = "/"),
+                Months = (`年` - 2021) * 12 + `月`,
+                Num = `人数` / 10000,
+                .keep = "none")
+```
+
+## 可視化
+
+グラフで表示します。
+
+```{r}
+#| label: plot_ts
+
+max_months <- max(data_Kanazawa$Months)
+p <- ggplot(data_Kanazawa) +
+  geom_line(aes(x = Months, y = Num), linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 3),
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  scale_y_continuous(name = "人数（万人）") +
+  theme_grey(base_family = font_jp, base_size = font_size)
+plot(p)
+```
+
+```{=html}
+<!--
+新型コロナウイルス感染症対策のまん延防止等重点措置が終了したのが2022年3月21日ですが、だいたいそれ以降、観光来訪者数が増加しているように見えます。
+-->
+```
+
+## モデル
+
+モデル定義
+
+-   観測モデル
+
+    -   状態から観測値が得られる過程
+
+-   システムモデル
+
+    -   状態の時間変化の過程
+
+## 観測モデル
+
+観測値（`Num）`はもともとは計数値ですが、数が大きく、1万人単位としていますので、観測モデルの誤差は正規分布するものとして扱います。
+
+## システムモデル
+
+-   回帰: 能登半島地震の影響を検討するため、地震発生の2024年1月以降を示すダミー変数`quake`を説明変数としてモデルに含めます。地震の影響は2024年1〜12月の間ずっとあると仮定しています。ただし影響の大きさは可変としています。
+
+-   トレンド: 次数2のモデル（水準成分と傾き成分）とします。
+
+-   季節成分: 毎月の変動をダミー変数で含めます。
+
+新型コロナウイルスの影響ですが、だんだん影響が薄れると想定し、トレンド成分に入ることを考えて、とくに回帰とはしませんでした。
+
+## KFASパッケージ
+
+状態空間モデルをあつかうパッケージ
+
+-   モデルの定義と観測データへのあてはめ
+
+-   カルマンフィルタによるフィルタリング・平滑化・予測
+
+-   正規分布以外（ポアソン分布など）の観測データにも対応
+
+## モデルの定義とあてはめ
+
+引数の`Q`と`H`はそれぞれシステムモデルと観測モデルの分散で、これを推定します。
+
+```{r}
+#| label: model1
+#| echo: true
+
+quake <- c(rep(0, 36), rep(1, 12)) # 地震発生以降を示すダミー変数
+model <- SSModel(Num ~
+                   SSMregression(~ quake, Q = NA) +
+                   SSMtrend(degree = 2,
+                            Q = list(matrix(NA), matrix(NA))) +
+                   SSMseasonal(period = 12, Q = NA, sea.type = "dummy"),
+                 H = NA, data = data_Kanazawa)
+fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
+```
+
+## 平滑化
+
+カルマンフィルタにより状態を平滑化し、その値を取得します。
+
+```{r}
+#| label: smooth
+#| echo: true
+
+smooth <- KFS(fit$model) |>
+  coef(filtered = FALSE)
+```
+
+## 能登半島地震の影響
+
+<!-- 地震影響の係数の推定値をみてみます。 -->
+
+```{r}
+#| label: quake
+
+ggplot(data = data.frame(Months = (max_months - 11):max_months,
+                         quake = smooth[, "quake"][37:48])) +
+  geom_line(mapping = aes(x = Months, y = quake),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(max_months - 11, max_months, 2),
+                     minor_breaks = seq(max_months - 11, max_months, 1),
+                     labels = data_Kanazawa$YM[seq(max_months - 11, max_months, 2)]) +
+  scale_y_continuous(name = "地震影響", limits = c(-10, 0)) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+
+```
+
+<!-- 1か月の来訪者数がおよそ`r round(-smooth[, "quake"][48], 1)`万人減少したと推定されました。 -->
+
+## 水準成分
+
+地震の影響と季節成分を除いた数に対応
+
+```{r}
+#| label: plot_level
+
+ggplot(data = data.frame(Months = 1:max_months,
+                         level = c(smooth[, "level"]))) +
+  geom_line(mapping = aes(x = Months, y = level),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 3),
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
+
+```{=html}
+<!--
+2021年の秋以降急増して、最近は頭打ち傾向のように見えます。
+-->
+```
+
+## 傾き成分
+
+1か月あたりの増加数
+
+```{r}
+#| label: plot_slope
+
+ggplot(data = data.frame(Months = 1:max_months,
+                         slope = c(smooth[, "slope"]))) +
+  geom_line(mapping = aes(x = Months, y = slope),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 3),
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
+
+```{=html}
+<!--
+2022年以降、傾き（増加率）が減少しているようです。2024年10月以降は0.4くらいで横ばいになっていますが、これが実際にそうなのかはもっと後のデータも含めて検討する必要があるでしょう。
+-->
+```
+
+## 季節成分
+
+```{r}
+#| label: plot_seasonal
+
+ggplot(data = data.frame(Months = 1:max_months,
+                         seasonal = c(smooth[, "sea_dummy1"]))) +
+  geom_line(mapping = aes(x = Months, y = seasonal),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months - 5, 6),
+                     minor_breaks = seq(1, max_months, 1),
+                     labels = data_Kanazawa$YM[seq(1, max_months - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
+
+```{=html}
+<!--
+毎年11月に来訪者数が多く、つづいて5月、3月となっています。一方、1月と2月の落ち込みが激しくなっています。
+-->
+```
+
+## 予測
+
+地震の影響はなくなったものとして12か月先までを予測
+
+```{r}
+#| label: prediction
+
+n_ahead <- 12
+quake <- rep(0, n_ahead)
+new_data <- SSModel(rep(NA, n_ahead) ~ SSMregression(~ quake,
+                                                     Q = fit$model$Q[1, 1, ]) +
+                      SSMtrend(degree = 2,
+                               Q = list(fit$model$Q[2, 2, ],
+                                        fit$model$Q[3, 3, ])) +
+                    SSMseasonal(period = 12, Q = fit$model$Q[4, 4, ],
+                                sea.type = "dummy"),
+                    H = fit$model$H)
+pred <- predict(fit$model, newdata = new_data,
+                  interval = "predict", level = 0.95,
+                  type = "response")
+```
+
+```{r}
+#| label: plot_prediction
+#| warning: false
+#| message: false
+
+pred_df <- data.frame(pred)
+pred_df$Months <- max_months + 1:n_ahead
+YM <- c(data_Kanazawa$YM, str_c("2025", 1:n_ahead, sep = "/"))
+p +
+  geom_ribbon(data = pred_df,
+              aes(x = Months, ymin = lwr, ymax = upr),
+              fill = "skyblue", alpha = 0.5) +
+  geom_line(data = pred_df,
+            aes(x = Months, y = fit),
+            linewidth = 1, color = "blue") +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(1, max_months + n_ahead - 5, 6),
+                     minor_breaks = seq(1, max_months + n_ahead, 3),
+                     labels = YM[seq(1, max_months + n_ahead - 5, 6)]) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+```
+
+## まとめ
+
+金沢市の2021〜2024年の観光来訪者数を状態空間モデルで解析した結果、以下のことが推測されました。
+
+-   能登半島地震の影響による来訪者数の減少は1月あたり`r round(-smooth[, "quake"][1], 1)`万人程度（厳密に言うと、2024年1月以降の減少なので、同時期の他の影響もあるかもしれません）
+-   2021年の秋以降、来訪者数は増加傾向にあるが、増加率は最近減少している
+-   来訪者数は毎年11月にもっとも多く、つづいて5月、3月の順
+-   来訪者数が少なくなるのは1月と2月
