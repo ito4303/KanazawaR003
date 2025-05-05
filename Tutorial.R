@@ -152,14 +152,60 @@ member[2, "name"] # 2行目のname列を取り出す
 member[2, 1]      # これでも同じ
 member$name[2]    # これでも同じ
 
+# 記述統計
+
+X <- 0:100 # 0から100までの整数のベクトル
+
+mean(X)  # 平均
+var(X)   # 不偏分散
+sd(X)    # 標準偏差
 
 
 
-# パッケージの利用
+
+# パッケージ利用とTidy data
+
+ # tidyverseパッケージをインストールする（依存パッケージもまとめてインストールする）
+
+install.packages("tidyverse", dependencies = TRUE)
 
 # tidyverseパッケージを読み込む
 
 library(tidyverse)
+
+# データの読み込み
+
+# スライド資料の気温データをファイルにしておきました
+
+file_path <- file.path("data", "kion.txt")
+
+Kion <- readr::read_tsv(file_path) # read_tsv()はタブ区切りのデータを読み込む関数
+Kion # 読み込んだデータを表示
+
+# Tidy dataに変換
+
+Kion_tidy <- Kion |>
+  tidyr::pivot_longer(cols = starts_with("2025"), # "2025"で始まる列を変換の対象とする
+                      names_to = "日付",          # 元の列名を"日付"列に入れる
+                      values_to = "最高気温")     # 値の列名を"最高気温"にする
+Kion_tidy # 変換したデータを表示
+
+# "|>"はパイプ演算子と呼ばれ、左側の結果を右側の関数の第1引数として渡すもの
+# magrittrパッケージの %>% も同じ
+
+# 平方根の和の自然対数を求めるといった場合
+
+log(sum(sqrt(X)))
+
+# パイプ演算子を使うと
+
+X |>
+  sqrt() |>
+  sum() |>
+  log()
+
+
+# setariaviridisパッケージをつかったデータ処理の例
 
 # setariaviridisパッケージをインストールする
 
@@ -174,26 +220,15 @@ View(setaria_viridis)    # データを表計算ソフトのように表示
 
 summary(setaria_viridis) # データの要約を表示
 
-# 記述統計
-
-mean(setaria_viridis$culm_length)  # 平均
-var(setaria_viridis$culm_length)   # 不偏分散
-sd(setaria_viridis$culm_length)    # 標準偏差
-
-
-
-# dplyrパッケージを使ったデータの抽出とパイプ演算子
+# dplyrパッケージを使ったデータの抽出
 
 setaria_viridis |>
   dplyr::pull(culm_length) |>  # culm_length列を抽出
-  mean()                         # 平均
+  mean()                       # 平均
 
 # パッケージ名::関数名 と書くと、library()関数でパッケージを読み込んで
 # おかなくても関数を使用できる
 # ほかのパッケージと関数名がかぶるときに、どのパッケージの関数か明示的に指定できる
-
-# パイプ演算子は結果を次の関数の第1引数として渡す
-# magrittrパッケージの %>% も同じ
 
 setaria_viridis %>%
   dplyr::filter(culm_length > 60) # culm_lengthが60以上のデータを抽出
@@ -214,6 +249,10 @@ member |>
   dplyr::pull(age) # pull()はベクトルとして抽出
 
 
+
+
+
+# グラフの作成
 
 # ggplot2パッケージを使ったグラフの描画
 

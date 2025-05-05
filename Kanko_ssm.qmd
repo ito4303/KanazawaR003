@@ -266,10 +266,11 @@ plot(p)
 
 quake <- c(rep(0, 36), rep(1, 12)) # 地震発生以降を示すダミー変数
 model <- SSModel(Num ~
-                   SSMregression(~ quake, Q = NA) +
-                   SSMtrend(degree = 2,
+                   SSMregression(~ quake, Q = NA) + # 回帰成分
+                   SSMtrend(degree = 2,             # トレンド成分
                             Q = list(matrix(NA), matrix(NA))) +
-                   SSMseasonal(period = 12, Q = NA, sea.type = "dummy"),
+                   SSMseasonal(period = 12, Q = NA, # 季節成分
+                               sea.type = "dummy"),
                  H = NA, data = data_Kanazawa)
 fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
 ```
