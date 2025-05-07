@@ -23,6 +23,8 @@ slide-number: true
 
 -   公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年
 
+-   CSVをParquetに変換して利用
+
 ## Rコード
 
 -   server.R: ロジック
