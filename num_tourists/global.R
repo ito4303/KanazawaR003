@@ -13,13 +13,14 @@ data_file <- c("city2021-2024.parquet")
 # read data
 data <- read_parquet(file.path(data_dir, data_file))
 
-# pref and city
+# 都道府県名を抽出
 pref <- data |>
   dplyr::select(`都道府県名`, `地域コード`) |>
   dplyr::arrange(`地域コード`) |>
   dplyr::pull(`都道府県名`) |>
   unique()
 
+# 各都道府県の市区町村名のベクトルを作成し、リストにする
 city <- purrr::map(pref,
                    \(x) data |>
                      dplyr::filter(`都道府県名` == x) |>
@@ -29,4 +30,6 @@ city <- purrr::map(pref,
                      unique() |>
                      as.list()
 )
+
+# リストの名前を都道府県名にする
 names(city) <- pref

@@ -212,6 +212,9 @@ library(Rcmdr)
     -   ggplot2
     -   などなど
 
+```{=html}
+<!--
+
 ## データサイエンスのモデル
 
 ![](https://r4ds.hadley.nz/diagrams/data-science/base.png)
@@ -219,6 +222,9 @@ library(Rcmdr)
 ::: {style="text-align: right;"}
 ([R for Data Science](https://r4ds.hadley.nz/intro.html))
 :::
+
+-->
+```
 
 ## データの読み込み
 

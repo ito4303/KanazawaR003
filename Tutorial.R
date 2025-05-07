@@ -17,16 +17,16 @@
 
 # 関数
 
-sqrt(4) # sqrt()は平方根を返す関数
+sqrt(4)    # sqrt()は平方根を返す関数
 
-?sqrt # sqrt()のヘルプを表示
+?sqrt      # sqrt()のヘルプを表示
 help(sqrt) # これでも同じ
 
-log(100) # log()は自然対数を返す関数
-log10(100) # log10()は常用対数を返す関数
+log(100)            # log()は自然対数を返す関数
+log10(100)          # log10()は常用対数を返す関数
 log(100, base = 10) # これでも同じ
-?log # log()のヘルプを表示
-log(100, 10) # 順番どおりなら、引数名は省略できる
+?log                # log()のヘルプを表示
+log(100, 10)        # 順番どおりなら、引数名は省略できる
 log(base = 10, 100) # これでもよい
 log(b = 10, 100)    # 引数名はほかと重ならなければ、途中まででもよい
                     # といっても、あとでわかりにくくなるので、
@@ -40,7 +40,7 @@ log(b = 10, 100)    # 引数名はほかと重ならなければ、途中まで�
 
 c(1, 2, 3) # c()はベクトルを作る関数
 
-1:10 # コロン(:)で連続する整数のベクトルをつくれる
+1:10       # コロン(:)で連続する整数のベクトルをつくれる
 
 # 代入
 
@@ -73,6 +73,7 @@ Y <- factor(c("リンゴ", "ミカン", "ブドウ", "リンゴ")) # 因子型�
 Y
 
 # 順序つきの因子型
+# 順序尺度変数をを扱うためのデータ型
 
 answer <- ordered(c("普通", "良い", "悪い", "普通", "良い", "普通"),
                   levels = c("悪い", "普通", "良い"))
@@ -90,13 +91,13 @@ matrix(1:6, nrow = 2, ncol = 3) # 行列を作る関数
 
 matrix(1:6, 2, 3, byrow = TRUE) # 行優先
 
-# ヘルプを確認
-
-?matrix # matrix()のヘルプを表示
-
 # TRUE/FALSEは論理型(logical)
 
 class(TRUE)
+
+# matrix関数のヘルプを確認
+
+?matrix
 
 # 行列演算
 
@@ -140,32 +141,35 @@ member <- data.frame(name = c("鈴木", "佐藤", "田中"),
                      height = c(170, 160, 180))
 member
 
-member$name # name列を取り出す
-member[, 1] # これでも同じ（Rの添え字は1から始まります）
+member$name      # name列を取り出す
+member[, 1]      # これでも同じ（Rの添え字は1から始まります）
 member[, "name"] # これでも同じ
 
-member[2, ] # 2行目を取り出す
+member[2, ]                     # 2行目を取り出す
 member[member$name == "佐藤", ] # nameが佐藤の行を取り出す
-                                # tidyverseだとよりわかりやすい書き方
+                                # tidyverseだとよりわかりやすい書き方（あとで）
 
 member[2, "name"] # 2行目のname列を取り出す
 member[2, 1]      # これでも同じ
 member$name[2]    # これでも同じ
 
+
 # 記述統計
 
 X <- 0:100 # 0から100までの整数のベクトル
 
-mean(X)  # 平均
-var(X)   # 不偏分散
-sd(X)    # 標準偏差
+mean(X)     # 平均
+var(X)      # 不偏分散
+sd(X)       # 標準偏差
+quantile(X) # 四分位数
 
 
 
-
+#
 # パッケージ利用とTidy data
+#
 
- # tidyverseパッケージをインストールする（依存パッケージもまとめてインストールする）
+# tidyverseパッケージをインストールする（依存パッケージもまとめてインストールする）
 
 install.packages("tidyverse", dependencies = TRUE)
 
@@ -184,11 +188,11 @@ Kion # 読み込んだデータを表示
 
 # Tidy dataに変換
 
-Kion_tidy <- Kion |>
+Kion_long <- Kion |>
   tidyr::pivot_longer(cols = starts_with("2025"), # "2025"で始まる列を変換の対象とする
                       names_to = "日付",          # 元の列名を"日付"列に入れる
                       values_to = "最高気温")     # 値の列名を"最高気温"にする
-Kion_tidy # 変換したデータを表示
+Kion_long # 変換したデータを表示
 
 # "|>"はパイプ演算子と呼ばれ、左側の結果を右側の関数の第1引数として渡すもの
 # magrittrパッケージの %>% も同じ
@@ -203,6 +207,12 @@ X |>
   sqrt() |>
   sum() |>
   log()
+
+# long -> wide 変換
+
+Kion_long |>
+  tidyr::pivot_wider(names_from = "日付",      # "日付"列の内容を新しい列の名前に
+                     values_from = "最高気温") # "最高気温"列の内容を新しい列の値に
 
 
 # setariaviridisパッケージをつかったデータ処理の例
@@ -250,9 +260,9 @@ member |>
 
 
 
-
-
+#
 # グラフの作成
+#
 
 # ggplot2パッケージを使ったグラフの描画
 
@@ -262,13 +272,17 @@ member |>
 
 # culm_lengthを横軸に、panicle_lengthを縦軸にした散布図を描く
 
+# ggplot関数で、ggplotオブジェクトを作成
+# "+"でレイヤーを追加していく
+
 ggplot(data = setaria_viridis,
        mapping = aes(x = culm_length, y = panicle_length)) +
   geom_point() + # 散布図
   labs(title = "Setaria viridis", # タイトル
-       x = "Culm length (cm)", y = "Panicle length (cm)") # 軸ラベル
+       x = "Culm length (cm)",    # X軸ラベル
+       y = "Panicle length (cm)") # Y軸ラベル
 
-# 参考までにデフォルトのbaseグラフィックスなら
+# デフォルトのbaseグラフィックスなら
 
 plot(x = setaria_viridis$culm_length,
      y = setaria_viridis$panicle_length,
@@ -311,3 +325,4 @@ p
 
 p +
   theme_classic(base_family = "Noto Sans", base_size = 18)
+
