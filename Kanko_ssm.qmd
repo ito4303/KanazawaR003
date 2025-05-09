@@ -6,7 +6,12 @@ lang: ja
 format:
   revealjs:
     theme: [default, custom.scss]
-    code-copy: true
+    code-copy: false
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: ""
+    prompt: true
 embed-resources: true
 slide-number: true
 ---
@@ -14,6 +19,14 @@ slide-number: true
 ## はじめに
 
 -   観光客の人数の時系列変化は基本データ
+
+-   金沢市への観光来訪者数がどのように変化しているのか
+
+    -   全般的な傾向
+
+    -   能登半島地震の影響
+
+    -   季節によるパターン
 
 ```{r}
 #| label: setup
@@ -83,9 +96,9 @@ ggplot(df, aes(x = Time, y = Y, group = Group, color = sig)) +
 
 ## 状態空間モデル
 
--   システムと観測値を想定する
+-   状態と観測値を想定する
 
-    -   システム: 直接観測することのできない状態
+    -   状態: 直接観測することのできないシステム
 
     -   観測値: 観測して得られるデータ
 
@@ -124,7 +137,7 @@ export_graph(ssm_graph, "output/ssm.png", "png",
 
 x\[t\]: 時間tにおける状態, y: 時間tにおける観測値
 
-## データ
+## 観光来訪者数データ
 
 -   公益社団法人日本観光振興協会「[デジタル観光統計オープンデータ](https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/)」の「市区町村観光来訪者数」2021〜2024年を使用
 -   スマートフォンの位置情報データを利用して収集
@@ -133,28 +146,30 @@ x\[t\]: 時間tにおける状態, y: 時間tにおける観測値
 
 ## データ読み込み
 
-ダウンロードしたCSVファイル（`city2021.csv`, `city2022.csv`, `city2023.csv`, `city2024.csv`）は、`data`フォルダに入れておきます。これらのファイルを読み込み、読み込んだデータを1つのデータフレームにまとめておきます。
+ダウンロードしたCSVファイルを読み込み、1つのデータフレームにまとめる
 
 ```{r}
 #| label: read_data
 #| echo: true
+#| output: false
 
 data_dir <- "data"
 data_files <- c("city2021.csv", "city2022.csv",
                 "city2023.csv", "city2024.csv")
 
-data_list <- purrr::map(data_files,
-                        \(f) read_csv(file = file.path(data_dir, f),
-                                      locale = locale(encoding = "CP932"),
-                                      show_col_types = FALSE))
-data <- dplyr::bind_rows(data_list)
+data <- purrr::map(data_files,
+          \(f) read_csv(file = file.path(data_dir, f),
+                        locale = locale(encoding = "CP932"))) |>
+  dplyr::bind_rows()
 ```
 
+::: {style="font-size: 75%;"}
 **データの出典**: デジタル観光統計オープンデータ（<https://www.nihon-kankou.or.jp/home/jigyou/research/d-toukei/>）（2025年3月11日ダウンロード）
+:::
 
-## データの抽出と加工
+## データの抽出
 
-金沢市のデータを抽出します。
+金沢市のデータを抽出
 
 ```{r}
 #| label: extract_kanazawa
@@ -164,25 +179,23 @@ data_Kanazawa <- data |>
   dplyr::filter(`地域名称` == "金沢市")
 ```
 
-以下のようなデータとなっています。
+## データの確認
 
 ```{r}
 #| label: head_kanazaw_data
+#| echo: true
 
-head(data_Kanazawa)
+print(data_Kanazawa)
 ```
 
 ## データの加工
 
-あとの可視化と解析のためデータを加工します。
+あとの可視化と解析のためデータを加工する
 
--   `年`と`月`から、"年/月"となる文字列変数`YM`をつくります。
-
--   2021年1月からの月数を`Months`という変数に格納します。
-
--   人数を1万人単位にして`Num`という変数に格納します。
-
--   必要な列（変数）だけ残します。
+-   `年`と`月`から、"年/月"となる文字列変数`YM`をつくる
+-   2021年1月からの月数を`Months`に
+-   人数を1万人単位にして`Num`に
+-   必要な列（変数）だけ残す
 
 ```{r}
 #| label: mutate
@@ -196,8 +209,6 @@ data_Kanazawa <- data_Kanazawa |>
 ```
 
 ## 可視化
-
-グラフで表示します。
 
 ```{r}
 #| label: plot_ts
@@ -220,37 +231,38 @@ plot(p)
 -->
 ```
 
-## モデル
+## 状態空間モデルの構築
 
-モデル定義
+-   システムモデル
+
+    -   状態の変化
 
 -   観測モデル
 
     -   状態から観測値が得られる過程
 
--   システムモデル
+## システムモデル
 
-    -   状態の時間変化の過程
+以下の3つの成分からなるモデル
+
+-   レベル（+トレンド）: レベルは、下の回帰成分と季節成分を除いた変化に対応
+    -   あるトレンド（傾き）をもって変化し、トレンドも変化する
+-   季節成分: 月ごとの変動（12か月周期）
+-   回帰成分: 能登半島地震の影響を検討するため、地震発生の2024年1月以降を示すダミー変数を説明変数としてモデルに含める
+
+それぞれ、あるノイズの値が加わって前の月から変化するとする
 
 ## 観測モデル
 
-観測値（`Num）`はもともとは計数値ですが、数が大きく、1万人単位としていますので、観測モデルの誤差は正規分布するものとして扱います。
+-   レベル＋季節＋回帰に、月ごとのノイズ（たまたま多かったり、少なかったり）が加わるとする
 
-## システムモデル
-
--   回帰: 能登半島地震の影響を検討するため、地震発生の2024年1月以降を示すダミー変数`quake`を説明変数としてモデルに含めます。地震の影響は2024年1〜12月の間ずっとあると仮定しています。ただし影響の大きさは可変としています。
-
--   トレンド: 次数2のモデル（水準成分と傾き成分）とします。
-
--   季節成分: 毎月の変動をダミー変数で含めます。
-
-新型コロナウイルスの影響ですが、だんだん影響が薄れると想定し、トレンド成分に入ることを考えて、とくに回帰とはしませんでした。
+今回のデータでは観測値はもともとは計数値だが、数が大きく、1万人単位としているので、観測モデルのノイズは正規分布するものとして扱う
 
 ## KFASパッケージ
 
-状態空間モデルをあつかうパッケージ
+Rで状態空間モデルをあつかうパッケージはいくつかあるが、今回はKFASを使用
 
--   モデルの定義と観測データへのあてはめ
+-   状態空間モデルの定義と観測データへのあてはめ
 
 -   カルマンフィルタによるフィルタリング・平滑化・予測
 
@@ -258,26 +270,27 @@ plot(p)
 
 ## モデルの定義とあてはめ
 
-引数の`Q`と`H`はそれぞれシステムモデルと観測モデルの分散で、これを推定します。
+`SSModel`関数でモデルを定義する。引数の`Q`と`H`はそれぞれシステムモデルと観測モデルのノイズの分散。`fitSSM`関数であてはめを実行。
 
 ```{r}
 #| label: model1
 #| echo: true
 
 quake <- c(rep(0, 36), rep(1, 12)) # 地震発生以降を示すダミー変数
-model <- SSModel(Num ~
-                   SSMregression(~ quake, Q = NA) + # 回帰成分
-                   SSMtrend(degree = 2,             # トレンド成分
-                            Q = list(matrix(NA), matrix(NA))) +
-                   SSMseasonal(period = 12, Q = NA, # 季節成分
-                               sea.type = "dummy"),
-                 H = NA, data = data_Kanazawa)
+model <- SSModel(
+  Num ~ SSMregression(~ quake, Q = NA) + # 回帰成分
+        SSMtrend(degree = 2,             # レベル成分（トレンドも）
+                 Q = list(matrix(NA), matrix(NA))) +
+        SSMseasonal(period = 12, Q = NA, # 季節成分
+                    sea.type = "dummy"),
+        H = NA,
+  data = data_Kanazawa)
 fit <- fitSSM(model, inits = c(0, 0, 0, 0, 0))
 ```
 
 ## 平滑化
 
-カルマンフィルタにより状態を平滑化し、その値を取得します。
+`KFS`関数により状態を平滑化し、その値を取得
 
 ```{r}
 #| label: smooth
@@ -287,29 +300,7 @@ smooth <- KFS(fit$model) |>
   coef(filtered = FALSE)
 ```
 
-## 能登半島地震の影響
-
-<!-- 地震影響の係数の推定値をみてみます。 -->
-
-```{r}
-#| label: quake
-
-ggplot(data = data.frame(Months = (max_months - 11):max_months,
-                         quake = smooth[, "quake"][37:48])) +
-  geom_line(mapping = aes(x = Months, y = quake),
-            color = "red", linewidth = 1) +
-  scale_x_continuous(name = "年/月",
-                     breaks = seq(max_months - 11, max_months, 2),
-                     minor_breaks = seq(max_months - 11, max_months, 1),
-                     labels = data_Kanazawa$YM[seq(max_months - 11, max_months, 2)]) +
-  scale_y_continuous(name = "地震影響", limits = c(-10, 0)) +
-  theme_grey(base_family = font_jp, base_size = font_size)
-
-```
-
-<!-- 1か月の来訪者数がおよそ`r round(-smooth[, "quake"][48], 1)`万人減少したと推定されました。 -->
-
-## 水準成分
+## レベル成分
 
 地震の影響と季節成分を除いた数に対応
 
@@ -333,7 +324,7 @@ ggplot(data = data.frame(Months = 1:max_months,
 -->
 ```
 
-## 傾き成分
+## トレンド
 
 1か月あたりの増加数
 
@@ -379,6 +370,28 @@ ggplot(data = data.frame(Months = 1:max_months,
 -->
 ```
 
+## 能登半島地震の影響
+
+<!-- 地震影響の係数の推定値をみてみます。 -->
+
+```{r}
+#| label: quake
+
+ggplot(data = data.frame(Months = (max_months - 11):max_months,
+                         quake = smooth[, "quake"][37:48])) +
+  geom_line(mapping = aes(x = Months, y = quake),
+            color = "red", linewidth = 1) +
+  scale_x_continuous(name = "年/月",
+                     breaks = seq(max_months - 11, max_months, 2),
+                     minor_breaks = seq(max_months - 11, max_months, 1),
+                     labels = data_Kanazawa$YM[seq(max_months - 11, max_months, 2)]) +
+  scale_y_continuous(name = "地震影響", limits = c(-10, 0)) +
+  theme_grey(base_family = font_jp, base_size = font_size)
+
+```
+
+<!-- 1か月の来訪者数がおよそ`r round(-smooth[, "quake"][48], 1)`万人減少したと推定されました。 -->
+
 ## 予測
 
 地震の影響はなくなったものとして12か月先までを予測
@@ -388,13 +401,13 @@ ggplot(data = data.frame(Months = 1:max_months,
 
 n_ahead <- 12
 quake <- rep(0, n_ahead)
-new_data <- SSModel(rep(NA, n_ahead) ~ SSMregression(~ quake,
-                                                     Q = fit$model$Q[1, 1, ]) +
+new_data <- SSModel(rep(NA, n_ahead) ~
+                      SSMregression(~ quake, Q = fit$model$Q[1, 1, ]) +
                       SSMtrend(degree = 2,
                                Q = list(fit$model$Q[2, 2, ],
                                         fit$model$Q[3, 3, ])) +
-                    SSMseasonal(period = 12, Q = fit$model$Q[4, 4, ],
-                                sea.type = "dummy"),
+                      SSMseasonal(period = 12, Q = fit$model$Q[4, 4, ],
+                                  sea.type = "dummy"),
                     H = fit$model$H)
 pred <- predict(fit$model, newdata = new_data,
                   interval = "predict", level = 0.95,
@@ -425,9 +438,8 @@ p +
 
 ## まとめ
 
-金沢市の2021〜2024年の観光来訪者数を状態空間モデルで解析した結果、以下のことが推測されました。
-
--   能登半島地震の影響による来訪者数の減少は1月あたり`r round(-smooth[, "quake"][1], 1)`万人程度（厳密に言うと、2024年1月以降の減少なので、同時期の他の影響もあるかもしれません）
--   2021年の秋以降、来訪者数は増加傾向にあるが、増加率は最近減少している
+-   能登半島地震の影響による来訪者数の減少は1月あたり`r round(-smooth[, "quake"][1], 1)`万人程度と推定された
+    -   厳密に言うと、2024年1月以降の減少なので、同時期の他の影響もあるかもしれない
+-   2021年の秋以降、来訪者数は増加傾向ですが、増加率は最近減少
 -   来訪者数は毎年11月にもっとも多く、つづいて5月、3月の順
 -   来訪者数が少なくなるのは1月と2月
