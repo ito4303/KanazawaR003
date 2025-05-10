@@ -324,6 +324,18 @@ ggplot(data = data.frame(Months = 1:max_months,
 -->
 ```
 
+## 観測値と重ねると
+
+```{r}
+#| label: plot_level_obs
+
+p +
+  geom_line(data = data.frame(Months = 1:max_months,
+                         level = c(smooth[, "level"])),
+            mapping = aes(x = Months, y = level),
+            color = "red", linewidth = 1)
+```
+
 ## トレンド
 
 1か月あたりの増加数
