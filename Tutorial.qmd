@@ -112,7 +112,6 @@ null device
 
 -   ユーザーが自分で作って公開できる
 
-
 ## RStudio
 
 -   Posit社が開発している統合開発環境（IDE）
